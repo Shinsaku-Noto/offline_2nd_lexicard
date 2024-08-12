@@ -7,14 +7,20 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\FollowController;
+use App\Http\Controllers\GoogleLoginController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\ProfileController;
 
 
 
 Auth::routes();
+Route::get('/google/redirect', [App\Http\Controllers\GoogleLoginController::class, 'redirectToGoogle'])->name('google.redirect');
+Route::get('/google/callback', [App\Http\Controllers\GoogleLoginController::class, 'handleGoogleCallback'])->name('google.callback');
 
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/progress/{day}', [App\Http\Controllers\HomeController::class, 'index_day'])->name('home.day');
+Route::get('/prev', [App\Http\Controllers\HomeController::class, 'prev_date'])->name('home.prev');
+Route::get('/next', [App\Http\Controllers\HomeController::class, 'next_date'])->name('home.next');
 Route::get('/my_category', [App\Http\Controllers\HomeController::class, 'my_category'])->name('home.my_category');
 Route::get('/liked', [App\Http\Controllers\HomeController::class, 'liked'])->name('home.liked');
 Route::get('/popular', [App\Http\Controllers\HomeController::class, 'popular'])->name('home.popular');
@@ -46,6 +52,7 @@ Route::group(["middleware" => "auth"], function() {
         Route::get('/run/{num}', [QuizController::class, 'runQuizzes'])->name('quiz.run');
         Route::get('/JtoEFlashcards/{num}', [QuizController::class, 'runJtoEFlashcards'])->name('quiz.jtoe');
         Route::get('/EtoJFlashcards/{num}', [QuizController::class, 'runEtoJFlashcards'])->name('quiz.etoj');
+        Route::get('/quiz/result/list', [QuizController::class,'result_list'])->name('result.list');
 
         Route::resource('/quiz', QuizController::class)->except('show');
 
