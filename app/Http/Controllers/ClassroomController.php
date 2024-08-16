@@ -2,6 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CategoryRequest;
+use App\Http\Requests\ClassroomAdminLoginRequest;
+use App\Http\Requests\ClassroomAdminRequest;
+use App\Http\Requests\ClassroomQuizCreateRequest;
+use App\Http\Requests\ClassroomQuizQuestionRequest;
+use App\Http\Requests\ClassroomQuizUpdateRequest;
 use App\Models\Category;
 use App\Models\Classroom;
 use App\Models\Like;
@@ -62,7 +68,8 @@ class ClassroomController extends Controller
             'name' => ['required','max:255'],
             'description' => ['max:255'],
             'status' => ['required'],
-            'password' =>['required','confirmed']
+            'password' =>['required','confirmed'],
+            'image' => ['image','mimes:jpeg,png,jpg'],
         ]);
 
         $this->classroom->name = $request->name;
@@ -141,9 +148,12 @@ class ClassroomController extends Controller
         $search = $request->classroom;
         $classrooms = $this->classroom->where('name', 'like', '%'.$search.'%')->get();
 
-        return view('users.classroom.users.search')
+        $display = 'all_class';
+
+        return view('users.classroom.users.index')
                 ->with('classrooms', $classrooms)
-                ->with('search', $search);
+                ->with('search', $search)
+                ->with('display', $display);
     }
 
     //Join & Leave
@@ -285,17 +295,19 @@ class ClassroomController extends Controller
     public function admin_index($id, Request $request) {
         $classroom = $this->classroom->findOrFail($id);
 
-        if(isset($request->password)){
+        if($request->password){
             if(password_verify($request->password, $classroom->password)){
                 return view('users.classroom.admin.index')
                         ->with('classroom', $classroom);
             }else{
-                return redirect()->route('classroom.classroom.show', $classroom)->with('error', 'Password is incorrect');
+                return view('users.classroom.users.show')
+                        ->with('classroom', $classroom)
+                        ->with('error', 'Password is incorrect');
             }
+        }else{
+            return view('users.classroom.admin.index')
+                    ->with('classroom', $classroom);
         }
-
-        return view('users.classroom.admin.index')
-                ->with('classroom', $classroom);
     }
 
     public function admin_edit($id) {
@@ -308,6 +320,13 @@ class ClassroomController extends Controller
 
 
     public function admin_update(Request $request, $id) {
+        $request->validate([
+            'name' => ['required','max:255'],
+            'description' => ['max:255'],
+            'status' => ['required'],
+            'image' => ['image','mimes:jpeg,png,jpg'],
+        ]);
+
         $classroom = $this->classroom->findOrFail($id);
 
         $classroom->name = $request->name;
@@ -318,7 +337,8 @@ class ClassroomController extends Controller
         $classroom->status_id = $request->status;
         $classroom->save();
 
-        return redirect()->route('classroom.admin.index', $classroom);
+        return view('users.classroom.admin.index')
+                ->with('classroom', $classroom);
     }
 
     public function admin_delete($id) {
@@ -344,7 +364,7 @@ class ClassroomController extends Controller
                 ->with('classroom', $classroom);
     }
 
-    public function admin_category_store($id, Request $request) {
+    public function admin_category_store($id, CategoryRequest $request) {
         $classroom = $this->classroom->findOrFail($id);
 
         $this->category->name = $request->category;
@@ -418,7 +438,7 @@ class ClassroomController extends Controller
                 ->with('classroom', $classroom);
     }
 
-    public function admin_quiz_create($id, Request $request) {
+    public function admin_quiz_create($id, ClassroomQuizCreateRequest $request) {
         $classroom = $this->classroom->findOrFail($id);
         $title = $request->title;
         $number = $request->number;
@@ -477,7 +497,7 @@ class ClassroomController extends Controller
         return redirect()->back();
     }
 
-    public function admin_quiz_update($id, Request $request) {
+    public function admin_quiz_update($id, ClassroomQuizUpdateRequest $request) {
         $quiz_title = $this->quizTitle->findOrFail($id);
 
         $quiz_title->title = $request->title;

@@ -148,6 +148,9 @@
             <button type="button" class="btn btn-yellow w-100 p-3 fs-5 border border-second rounded-4 my-3" data-bs-toggle="modal" data-bs-target="#adminPasswordModal-{{ $classroom->id }}">
                 Admin
             </button>
+            @if(isset($error))
+                <p class="text-danger text-center">{{ $error }}</p>
+            @endif
         </div>
 
     </div>
@@ -167,7 +170,7 @@
           <form action="{{ route('classroom.admin.index', $classroom->id) }}" method="post" class="w-75 m-auto">
             @csrf
             @method('GET')
-            <input type="text" name="password" class="form-control my-4">
+            <input type="text" name="password" class="form-control my-4" required>
             <div class="row justify-content-between my-4">
                 <div class="col-5">
                     <button type="button" class="btn btn-cancel w-100" data-bs-dismiss="modal">Close</button>

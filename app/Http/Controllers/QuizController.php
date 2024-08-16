@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\QuizRequest;
+use App\Http\Requests\QuizRunRequest;
 use App\Models\Category;
 use App\Models\QuizResult;
 use App\Models\Word;
 use ChrisKonnertz\DeepLy\DeepLy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+
+
 
 class QuizController extends Controller
 {
@@ -45,7 +50,7 @@ class QuizController extends Controller
         return $all_categories;
     }
 
-    public function show(Request $request) {
+    public function show(QuizRequest $request) {
         session(['category_id' => $request->category, 'format' => $request->format]);
 
         $category = $this->category->where('id', $request->category)->get();
@@ -125,13 +130,45 @@ class QuizController extends Controller
     }
 
 //Quiz Creation and Running
-    public function runQuizzes($num, Request $request) {
-        if($request->choice) {
+    public function runQuizzes($num, QuizrunRequest $request) {
+
+        if(session('format') == "JtoEQ" || session('format') == "EtoJQ") {
+            $validator = Validator::make($request->all(), [
+                'choice' => ['required']
+            ]);
+
+            if ($validator->fails()) {
+                $quizzes = session('quizzes');
+
+                $quiz = $quizzes[$num];
+                return view('users.quiz.quiz')
+                        ->with('num', $num)
+                        ->with('quiz', $quiz)
+                        ->with('error', 'Please select an answer.');
+            }
+
+
             $choices = session('choices');
             $choices[] = $request->choice;
 
             session(['choices' => $choices]);
-        }else if($request->input) {
+
+        }else{
+            $validator = Validator::make($request->all(), [
+                'input' => ['required'],
+            ]);
+
+            if ($validator->fails()) {
+                $quizzes = session('quizzes');
+
+                $quiz = $quizzes[$num];
+                return view('users.quiz.fill_in_the_blank')
+                        ->with('num', $num)
+                        ->with('quiz', $quiz)
+                        ->with('error', 'Please enter an answer.');
+            }
+
+
             $choices = session('choices');
             $choices[] = $request->input;
 
@@ -175,14 +212,17 @@ class QuizController extends Controller
 
 
             //store to quiz resutls table
-            $previous_result = $this->quizResult->where('category_id', session('category_id'))->where('format', session('format'))->first();
+            $previous_result = $this->quizResult->where('user_id', Auth::id())->where('category_id', session('category_id'))->where('format', session('format'))->latest()->first();
             if($previous_result){
-                $previous_result->score = $correct_answers;
-                $previous_result->questions = json_encode($questions);
-                $previous_result->answers = json_encode($answer);
-                $previous_result->choices = json_encode($choices);
-                $previous_result->times_taken += 1;
-                $previous_result->save();
+                $this->quizResult->user_id = Auth::id();
+                $this->quizResult->category_id = session('category_id');
+                $this->quizResult->format = session('format');
+                $this->quizResult->score = $correct_answers;
+                $this->quizResult->questions = json_encode($questions);
+                $this->quizResult->answers = json_encode($answer);
+                $this->quizResult->choices = json_encode($choices);
+                $this->quizResult->times_taken = $previous_result->times_taken + 1;
+                $this->quizResult->save();
             }else{
                 $this->quizResult->user_id = Auth::id();
                 $this->quizResult->category_id = session('category_id');
@@ -261,6 +301,9 @@ class QuizController extends Controller
     public function createFillInQuiz($words) {
         $quizzes = [];
         foreach($words as $word) {
+            if($word[0]->example == "No example found.") {
+                continue;
+            }
             $example_with_it = $word[0]->example;
             $example_meaning = $this->translateExample($example_with_it);
 
@@ -360,7 +403,7 @@ class QuizController extends Controller
     }
 
     public function result_list() {
-        $quiz_datas = $this->quizResult->where('user_id', Auth::id())->orderBy('times_taken', 'asc')->orderBy('updated_at', 'desc')->get();
+        $quiz_datas = $this->quizResult->where('user_id', Auth::id())->latest()->get();
 
         return view('users.quiz.result_list')
                 ->with('quiz_datas', $quiz_datas);

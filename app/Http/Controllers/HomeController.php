@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SortRequest;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\QuizResult;
 use App\Models\Word;
 use Illuminate\Support\Facades\Auth;
-
-
+use Ramsey\Collection\Sort;
 
 class HomeController extends Controller
 {
@@ -250,7 +250,7 @@ class HomeController extends Controller
                 ->with('quiz_datas', $quiz_datas);
     }
 
-    public function otheruser(Request $request)
+    public function otheruser(SortRequest $request)
     {
         $categories = $this->category->where('user_id', $request->other_user)->latest()->get();
 
@@ -399,11 +399,20 @@ class HomeController extends Controller
         $now = date('Y-m-d');
 
         $quiz_list = [];
+        $out_of_list = [];
         // To get only 8 data
         $num = 0;
         foreach($quizzes as $quiz){
             $quiz_taken = $quiz->updated_at->diffInDays($now);
 
+            //　If quiz has taken few times display only the latest quiz
+            $same_quiz= $this->quizResult->where('user_id', Auth::id())->where('category_id', $quiz->category_id)->where('format', $quiz->format)->get();
+            $same_quiz_number = count($same_quiz);
+            if($quiz->times_taken != $same_quiz_number){
+                continue;
+            }
+
+            //if quiz has taken 1, display more than 1 day ago
             if($quiz->times_taken == 1){
                 if($quiz_taken  >= 1){
                     $quiz_list[] = $quiz;
@@ -411,7 +420,10 @@ class HomeController extends Controller
                     if($num == 8){
                         break;
                     }
+                }else{
+                    $out_of_list[] = $quiz;
                 }
+            //if quiz has taken 2, display more than 7 days ago
             }elseif($quiz->times_taken == 2){
                 if($quiz_taken  >= 7){
                     $quiz_list[] = $quiz;
@@ -419,7 +431,10 @@ class HomeController extends Controller
                     if($num == 8){
                         break;
                     }
+                }else{
+                    $out_of_list[] = $quiz;
                 }
+            //if quiz has taken 3, display more than 30 days ago
             }elseif($quiz->times_taken == 3){
                 if($quiz_taken  >= 30){
                     $quiz_list[] = $quiz;
@@ -427,9 +442,26 @@ class HomeController extends Controller
                     if($num == 8){
                         break;
                     }
+                }else{
+                    $out_of_list[] = $quiz;
+                }
+            }else{
+                $out_of_list[] = $quiz;
+            }
+        }
+
+        if($num < 8){
+            foreach($out_of_list as $quiz){
+                $quiz_list[] = $quiz;
+                $num++;
+                if($num == 8){
+                    break;
                 }
             }
         }
+
+
+
         return $quiz_list;
     }
 
