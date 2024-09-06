@@ -60,7 +60,7 @@
                         </div>
                     </form>
 
-                    <a href="{{ route('google.redirect') }}" class="btn btn-primary my-4 mx-auto text-center"> Login with Google </a>
+                    <!-- <a href="{{ route('google.redirect') }}" class="btn btn-primary my-4 mx-auto text-center"> Login with Google </a> -->
                 </div>
             </div>
         </div>
