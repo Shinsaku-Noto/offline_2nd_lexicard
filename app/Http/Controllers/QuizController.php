@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\QuizRequest;
-use App\Http\Requests\QuizRunRequest;
+use App\Http\Requests\QuizrunRequest;
 use App\Models\Category;
 use App\Models\QuizResult;
 use App\Models\Word;
