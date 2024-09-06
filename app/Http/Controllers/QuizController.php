@@ -363,7 +363,7 @@ class QuizController extends Controller
         if($num < count($flashcards)) {
             $flashcard = $flashcards[$num];
 
-            return view('users.quiz.JtoEflashcard')
+            return view('users.quiz.JtoEFlashcard')
                     ->with('num', $num)
                     ->with('flashcard', $flashcard);
         }else{
@@ -379,7 +379,7 @@ class QuizController extends Controller
         if($num < count($flashcards)) {
             $flashcard = $flashcards[$num];
 
-            return view('users.quiz.EtoJflashcard')
+            return view('users.quiz.EtoJFlashcard')
                     ->with('num', $num)
                     ->with('flashcard', $flashcard);
         }else{
