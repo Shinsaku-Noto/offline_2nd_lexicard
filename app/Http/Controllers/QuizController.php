@@ -109,7 +109,7 @@ class QuizController extends Controller
             $num = 0;
             $flashcard = $flashcards[$num];
 
-            return view('users.quiz.JtoEflashcard')
+            return view('users.quiz.JtoEFlashcard')
                     ->with('num', $num)
                     ->with('flashcard', $flashcard);
 
@@ -122,7 +122,7 @@ class QuizController extends Controller
             $num = 0;
             $flashcard = $flashcards[$num];
 
-            return view('users.quiz.EtoJflashcard')
+            return view('users.quiz.EtoJFlashcard')
                     ->with('num', $num)
                     ->with('flashcard', $flashcard);
 
